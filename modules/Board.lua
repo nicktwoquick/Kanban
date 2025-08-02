@@ -38,24 +38,78 @@ local function CreateKanbanBoard(parentFrame)
     return boardGroup
 end
 
--- Refresh the entire board
+-- Refresh the board by removing children and re-adding them
 local function RefreshBoard()
+    debug("RefreshBoard called")
+    
     local mainAddon = _G.Kanban
-    debug("RefreshBoard called - mainAddon: " .. tostring(mainAddon ~= nil))
-    if mainAddon then
-        debug("RefreshMainWindow available: " .. tostring(mainAddon.RefreshMainWindow ~= nil))
-        debug("MainFrame exists: " .. tostring(mainAddon.mainFrame ~= nil))
-        if mainAddon.mainFrame then
-            debug("MainFrame is shown: " .. tostring(mainAddon.mainFrame:IsShown()))
-        end
+    if not mainAddon or not mainAddon.mainFrame then
+        debug("No main frame available for refresh")
+        return
     end
-    if mainAddon and mainAddon.RefreshMainWindow then
-        debug("Calling RefreshMainWindow")
-        mainAddon:RefreshMainWindow()
-        debug("RefreshMainWindow call completed")
+    
+    debug("Starting board refresh - mainFrame exists: " .. tostring(mainAddon.mainFrame ~= nil))
+    
+    -- Find the board container (it should be the second child after the CRUD button row)
+    local boardContainer = nil
+    local children = mainAddon.mainFrame.children or {}
+    
+    debug("Main frame has " .. #children .. " children")
+    
+    -- Look for the board container (should be the second child)
+    if #children >= 2 then
+        boardContainer = children[2]
+        debug("Found board container at index 2")
     else
-        debug("RefreshMainWindow not available")
+        debug("Board container not found in expected position")
+        return
     end
+    
+    if not boardContainer then
+        debug("Board container is nil")
+        return
+    end
+    
+    -- Pause layout during the refresh operation
+    boardContainer:PauseLayout()
+    
+    -- Remove all existing children from the board container
+    debug("Removing existing board children")
+    boardContainer:ReleaseChildren()
+    
+    -- Recreate the kanban board using the same pattern as initial creation
+    debug("Recreating kanban board using CreateKanbanBoard")
+    local success, kanbanBoard = pcall(function()
+        if mainAddon.Board and mainAddon.Board.CreateKanbanBoard then
+            return mainAddon.Board:CreateKanbanBoard(mainAddon.mainFrame)
+        else
+            debug("Board.CreateKanbanBoard not found")
+            return nil
+        end
+    end)
+    
+    if success and kanbanBoard then
+        debug("Kanban board recreated successfully")
+        boardContainer:AddChild(kanbanBoard)
+        debug("Kanban board added to container")
+    else
+        debug("Failed to recreate kanban board")
+        if not success then
+            debug("Error: " .. tostring(kanbanBoard))
+        end
+        
+        -- Add fallback content
+        local fallbackLabel = AceGUI:Create("Label")
+        fallbackLabel:SetText("Kanban board failed to load. Check for errors.")
+        fallbackLabel:SetColor(1, 0, 0)
+        boardContainer:AddChild(fallbackLabel)
+    end
+    
+    -- Resume layout and force a layout update
+    boardContainer:ResumeLayout()
+    boardContainer:DoLayout()
+    
+    debug("Board refresh completed successfully")
 end
 
 -- Export board functions

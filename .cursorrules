@@ -1,0 +1,42 @@
+# Kanban WoW Addon - Cursor Rules
+
+## Project Overview
+This is a World of Warcraft addon built using the Ace3 framework. It's a kanban-style to-do list addon that runs within the WoW game client.
+
+## Testing Approach
+- **DO NOT** attempt to run tests or execute the code directly
+- **DO NOT** use `run_terminal_cmd` to test the addon
+- **DO NOT** try to simulate WoW environment
+- **ASK THE USER** to test the addon in-game instead
+
+## Development Guidelines
+- Focus on code quality and proper AceGUI-3.0 patterns
+- Use proper frame and widget management
+- Follow WoW addon best practices
+- Ensure proper module structure and dependencies
+
+## When Making Changes
+1. Review the code for logical correctness
+2. Check for proper AceGUI widget usage
+3. Verify module dependencies are correct
+4. Ask the user to test changes in-game
+5. Provide clear instructions for testing
+
+## File Structure
+- `Kanban.lua` - Main addon file
+- `modules/` - Individual addon modules
+- `libs/` - Ace3 library dependencies
+- `Kanban.toc` - Addon metadata file
+
+## Common Patterns
+- Use `AceGUI:Create()` for widgets
+- Properly manage widget lifecycle with `Release()`
+- Use `DoLayout()` for layout updates
+- Follow the refresh pattern: remove children, re-add them
+
+## Testing Instructions for User
+When suggesting changes, always include:
+- What to test in-game
+- How to trigger the functionality
+- What to look for to verify the change works
+- Any debug output to check in chat 

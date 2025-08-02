@@ -58,11 +58,12 @@ local function createTaskCard(task, parentFrame)
                 debug("Move button clicked for task " .. task.id .. " to " .. column.name)
                 if TaskManager.moveTask and TaskManager.moveTask(task.id, column.name) then
                     debug("Task moved successfully, refreshing board")
-                    -- Refresh the board
-                    if addon and addon.Board and addon.Board.RefreshBoard then
-                        addon.Board:RefreshBoard()
+                    -- Use the new lightweight board refresh
+                    if _G.Kanban and _G.Kanban.Board and _G.Kanban.Board.RefreshBoard then
+                        debug("Using Board.RefreshBoard for task move")
+                        _G.Kanban.Board:RefreshBoard()
                     else
-                        debug("Board refresh not available, trying direct refresh")
+                        debug("Board.RefreshBoard not available, trying direct refresh")
                         -- Try direct refresh if Board module not available
                         if _G.Kanban and _G.Kanban.RefreshMainWindow then
                             _G.Kanban:RefreshMainWindow()

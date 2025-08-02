@@ -282,26 +282,17 @@ function Kanban:CreateMainWindow()
     refreshButton:SetWidth(120)
     refreshButton:SetCallback("OnClick", function()
         debug("Refresh button clicked")
-        debug("Current mainFrame state: " .. tostring(self.mainFrame ~= nil))
-        if self.mainFrame then
-            debug("MainFrame is shown: " .. tostring(self.mainFrame:IsShown()))
-            debug("MainFrame is valid: " .. tostring(self.mainFrame:IsValid()))
-        end
         
-        -- Force an immediate refresh
-        self:RefreshMainWindow()
-        
-        -- Force a second refresh after a short delay to ensure UI updates
-        C_Timer.After(0.1, function()
-            debug("Performing delayed refresh")
+        -- Use the new lightweight board refresh
+        if self.Board and self.Board.RefreshBoard then
+            debug("Using Board.RefreshBoard for lightweight refresh")
+            self.Board:RefreshBoard()
+        else
+            debug("Board.RefreshBoard not available, falling back to RefreshMainWindow")
             self:RefreshMainWindow()
-        end)
-        
-        debug("Refresh button - RefreshMainWindow call completed")
-        debug("New mainFrame state: " .. tostring(self.mainFrame ~= nil))
-        if self.mainFrame then
-            debug("New MainFrame is shown: " .. tostring(self.mainFrame:IsShown()))
         end
+        
+        debug("Refresh button completed")
     end)
     crudButtonGroup:AddChild(refreshButton)
     
@@ -325,7 +316,14 @@ function Kanban:CreateMainWindow()
             local success = self.TaskManager.moveTask(1, "In Progress")
             debug("Test move result: " .. tostring(success))
             if success then
-                self:RefreshMainWindow()
+                -- Use the new lightweight board refresh
+                if self.Board and self.Board.RefreshBoard then
+                    debug("Using Board.RefreshBoard after test move")
+                    self.Board:RefreshBoard()
+                else
+                    debug("Board.RefreshBoard not available, falling back to RefreshMainWindow")
+                    self:RefreshMainWindow()
+                end
             end
         end
     end)
