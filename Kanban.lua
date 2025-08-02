@@ -8,6 +8,10 @@ local AceGUI = LibStub("AceGUI-3.0")
 -- Create the addon using AceAddon framework
 local Kanban = AceAddon:NewAddon(addonName, "AceEvent-3.0")
 addon = Kanban -- Make addon globally accessible
+_G.Kanban = Kanban -- Make addon globally accessible for modules
+
+-- Modules will be loaded by the TOC file in order
+-- They will be available as global tables: _G.Kanban_Utils, _G.Kanban_TaskManager, etc.
 
 -- Debug function
 local function debug(message)
@@ -23,25 +27,27 @@ function Kanban:OnInitialize()
         Kanban:ToggleWindow()
     end
     
-    -- Ensure GUI functions are attached
-    if not self.GUI then
-        self.GUI = {}
-    end
-    
-    -- Force GUI functions to be attached if they exist in the global scope
-    if _G.Kanban_GUI_Functions then
-        debug("Attaching GUI functions from global scope")
-        for name, func in pairs(_G.Kanban_GUI_Functions) do
-            self.GUI[name] = func
-        end
-    end
+    -- Attach modules to the addon
+    self.Utils = _G.Kanban_Utils
+    self.TaskManager = _G.Kanban_TaskManager
+    self.UIComponents = _G.Kanban_UIComponents
+    self.Dialogs = _G.Kanban_Dialogs
+    self.Board = _G.Kanban_Board
     
     debug("Addon loaded. Type /kanban or /kb to open the window.")
+    debug("Global Kanban reference set: " .. tostring(_G.Kanban ~= nil))
 end
 
 -- Toggle the main window
 function Kanban:ToggleWindow()
     debug("ToggleWindow called")
+    
+    -- Defensive check: ensure we only have one window
+    if self.mainFrame and not self.mainFrame:IsValid() then
+        debug("Main frame is invalid, clearing reference")
+        self.mainFrame = nil
+    end
+    
     if not self.mainFrame then
         debug("Creating new window")
         self:CreateMainWindow()
@@ -61,37 +67,295 @@ function Kanban:ToggleWindow()
     end
 end
 
+-- Refresh the main window (recreates the window content)
+function Kanban:RefreshMainWindow()
+    debug("RefreshMainWindow called")
+    
+    -- Defensive check: ensure the frame is valid before trying to refresh
+    if self.mainFrame and not self.mainFrame:IsValid() then
+        debug("Main frame is invalid, clearing reference")
+        self.mainFrame = nil
+    end
+    
+    if self.mainFrame then
+        debug("Main frame exists, forcing complete refresh")
+        -- Store current window position and visibility
+        local wasShown = self.mainFrame:IsShown()
+        
+        -- Force a complete cleanup
+        self.mainFrame:Release()
+        self.mainFrame = nil
+        
+        -- Create a new window immediately
+        self:CreateMainWindow()
+        
+        -- Show the window if it was previously shown
+        if self.mainFrame and wasShown then
+            self.mainFrame:Show()
+        end
+        
+        -- Force a UI update
+        if self.mainFrame then
+            self.mainFrame:DoLayout()
+        end
+    else
+        debug("No main frame exists, creating new window")
+        -- Create new window if none exists
+        self:CreateMainWindow()
+        if self.mainFrame then
+            self.mainFrame:Show()
+        end
+    end
+end
+
+-- Refresh just the components without recreating the entire window
+function Kanban:RefreshComponents()
+    debug("RefreshComponents called")
+    
+    if not self.mainFrame then
+        debug("No main frame to refresh components")
+        return
+    end
+    
+    -- Get all children of the main frame
+    local children = {}
+    for i = 1, self.mainFrame:GetNumChildren() do
+        local child = self.mainFrame:GetChild(i)
+        if child then
+            table.insert(children, child)
+        end
+    end
+    
+    debug("Found " .. #children .. " children to refresh")
+    
+    -- Remove all children except the first one (CRUD button row)
+    for i = #children, 2, -1 do
+        debug("Removing child " .. i)
+        self.mainFrame:RemoveChild(children[i])
+        children[i]:Release()
+    end
+    
+    -- Recreate the kanban board
+    debug("Recreating kanban board")
+    local boardContainer = AceGUI:Create("InlineGroup")
+    boardContainer:SetLayout("Flow")
+    boardContainer:SetWidth(880)
+    boardContainer:SetHeight(590)
+    
+    -- Add the kanban board with error handling
+    local success, kanbanBoard = pcall(function()
+        if self.Board and self.Board.CreateKanbanBoard then
+            return self.Board:CreateKanbanBoard(self.mainFrame)
+        else
+            debug("Board.CreateKanbanBoard not found")
+            return nil
+        end
+    end)
+    
+    if success and kanbanBoard then
+        debug("Kanban board recreated successfully")
+        boardContainer:AddChild(kanbanBoard)
+    else
+        debug("Failed to recreate kanban board")
+        if not success then
+            debug("Error: " .. tostring(kanbanBoard))
+        end
+        
+        -- Add fallback content
+        local fallbackLabel = AceGUI:Create("Label")
+        fallbackLabel:SetText("Kanban board failed to load. Check for errors.")
+        fallbackLabel:SetColor(1, 0, 0)
+        boardContainer:AddChild(fallbackLabel)
+    end
+    
+    -- Add the board container to the main frame
+    self.mainFrame:AddChild(boardContainer)
+    
+    -- Refresh the task dropdown if the function exists
+    if self.refreshTaskDropdown then
+        debug("Refreshing task dropdown")
+        self.refreshTaskDropdown()
+    end
+    
+    debug("RefreshComponents completed")
+end
+
 -- Create the main window using AceGUI
 function Kanban:CreateMainWindow()
     debug("CreateMainWindow called")
     
+    -- Defensive check: if a main frame already exists, release it first
+    if self.mainFrame then
+        debug("Main frame already exists, releasing it first")
+        self.mainFrame:Release()
+        self.mainFrame = nil
+    end
+    
     -- Create the main frame
     self.mainFrame = AceGUI:Create("Frame")
-    self.mainFrame:SetTitle("Kanban - To-Do List")
-    self.mainFrame:SetLayout("Flow")
+    
+    -- Initialize refresh counter if it doesn't exist
+    if not self.refreshCount then
+        self.refreshCount = 0
+    end
+    self.refreshCount = self.refreshCount + 1
+    
+    self.mainFrame:SetTitle("Kanban - To-Do List (Refresh #" .. self.refreshCount .. " at " .. date("%H:%M:%S") .. ")")
+    self.mainFrame:SetLayout("List") -- Changed from Flow to List for top alignment
     self.mainFrame:SetWidth(900)
     self.mainFrame:SetHeight(700)
     self.mainFrame:SetCallback("OnClose", function(widget)
         debug("Window close callback triggered")
-        widget:Hide()
+        -- Clear the reference so the window can be recreated
+        self.mainFrame = nil
+        widget:Release()
     end)
+    
+    debug("About to create CRUD button row")
+    
+    -- Create CRUD button row that spans the full width
+    local crudButtonGroup = AceGUI:Create("InlineGroup")
+    crudButtonGroup:SetLayout("Flow")
+    crudButtonGroup:SetWidth(880) -- Full width minus some padding
+    crudButtonGroup:SetHeight(60) -- Increased height for better spacing
+    
+    -- Task selection dropdown for edit/delete operations
+    local taskDropdown = AceGUI:Create("Dropdown")
+    taskDropdown:SetWidth(200)
+    taskDropdown:SetLabel("Select Task:")
+    
+    -- Function to refresh task dropdown
+    local function refreshTaskDropdown()
+        local tasks = {}
+        if self.TaskManager and self.TaskManager.getAllTasks then
+            local allTasks = self.TaskManager.getAllTasks()
+            for _, task in ipairs(allTasks) do
+                tasks[task.id] = task.title .. " (" .. task.status .. ")"
+            end
+        end
+        taskDropdown:SetList(tasks)
+        taskDropdown:SetValue(nil)
+    end
+    
+    -- Store the refresh function for later use
+    self.refreshTaskDropdown = refreshTaskDropdown
+    
+    -- Initial population of dropdown
+    refreshTaskDropdown()
+    crudButtonGroup:AddChild(taskDropdown)
+    
+    -- Add CRUD buttons
+    local addButton = AceGUI:Create("Button")
+    addButton:SetText("+ Add Task")
+    addButton:SetWidth(120)
+    addButton:SetCallback("OnClick", function()
+        if self.Dialogs and self.Dialogs.ShowAddTaskDialog then
+            self.Dialogs:ShowAddTaskDialog()
+        end
+    end)
+    crudButtonGroup:AddChild(addButton)
+    
+    local editButton = AceGUI:Create("Button")
+    editButton:SetText("Edit Task")
+    editButton:SetWidth(120)
+    editButton:SetCallback("OnClick", function()
+        local selectedTaskId = taskDropdown:GetValue()
+        if selectedTaskId and self.Dialogs and self.Dialogs.ShowEditTaskDialog then
+            self.Dialogs:ShowEditTaskDialog(selectedTaskId)
+        end
+    end)
+    crudButtonGroup:AddChild(editButton)
+    
+    local deleteButton = AceGUI:Create("Button")
+    deleteButton:SetText("Delete Task")
+    deleteButton:SetWidth(120)
+    deleteButton:SetCallback("OnClick", function()
+        local selectedTaskId = taskDropdown:GetValue()
+        if selectedTaskId and self.Dialogs and self.Dialogs.ShowConfirmDeleteDialog then
+            self.Dialogs:ShowConfirmDeleteDialog(selectedTaskId)
+        end
+    end)
+    crudButtonGroup:AddChild(deleteButton)
+    
+    local refreshButton = AceGUI:Create("Button")
+    refreshButton:SetText("Refresh")
+    refreshButton:SetWidth(120)
+    refreshButton:SetCallback("OnClick", function()
+        debug("Refresh button clicked")
+        debug("Current mainFrame state: " .. tostring(self.mainFrame ~= nil))
+        if self.mainFrame then
+            debug("MainFrame is shown: " .. tostring(self.mainFrame:IsShown()))
+            debug("MainFrame is valid: " .. tostring(self.mainFrame:IsValid()))
+        end
+        
+        -- Force an immediate refresh
+        self:RefreshMainWindow()
+        
+        -- Force a second refresh after a short delay to ensure UI updates
+        C_Timer.After(0.1, function()
+            debug("Performing delayed refresh")
+            self:RefreshMainWindow()
+        end)
+        
+        debug("Refresh button - RefreshMainWindow call completed")
+        debug("New mainFrame state: " .. tostring(self.mainFrame ~= nil))
+        if self.mainFrame then
+            debug("New MainFrame is shown: " .. tostring(self.mainFrame:IsShown()))
+        end
+    end)
+    crudButtonGroup:AddChild(refreshButton)
+    
+    local clearButton = AceGUI:Create("Button")
+    clearButton:SetText("Clear All")
+    clearButton:SetWidth(120)
+    clearButton:SetCallback("OnClick", function()
+        if self.Dialogs and self.Dialogs.ShowConfirmClearDialog then
+            self.Dialogs:ShowConfirmClearDialog()
+        end
+    end)
+    crudButtonGroup:AddChild(clearButton)
+    
+    -- Add a test button to manually move the sample task
+    local testMoveButton = AceGUI:Create("Button")
+    testMoveButton:SetText("Test Move")
+    testMoveButton:SetWidth(120)
+    testMoveButton:SetCallback("OnClick", function()
+        debug("Test move button clicked")
+        if self.TaskManager and self.TaskManager.moveTask then
+            local success = self.TaskManager.moveTask(1, "In Progress")
+            debug("Test move result: " .. tostring(success))
+            if success then
+                self:RefreshMainWindow()
+            end
+        end
+    end)
+    crudButtonGroup:AddChild(testMoveButton)
+    
+    -- Add the CRUD button row to the main frame
+    self.mainFrame:AddChild(crudButtonGroup)
     
     debug("About to create kanban board")
     
+    -- Create the kanban board container with Flow layout for horizontal columns
+    local boardContainer = AceGUI:Create("InlineGroup")
+    boardContainer:SetLayout("Flow")
+    boardContainer:SetWidth(880)
+    boardContainer:SetHeight(590) -- Adjusted for taller CRUD button row
+    
     -- Add the kanban board with error handling
     local success, kanbanBoard = pcall(function()
-        if self.GUI and self.GUI.CreateKanbanBoard then
-            return self.GUI:CreateKanbanBoard(self.mainFrame)
+        if self.Board and self.Board.CreateKanbanBoard then
+            return self.Board:CreateKanbanBoard(self.mainFrame)
         else
-            debug("GUI.CreateKanbanBoard not found")
+            debug("Board.CreateKanbanBoard not found")
             return nil
         end
     end)
     
     if success and kanbanBoard then
         debug("Kanban board created successfully")
-        self.mainFrame:AddChild(kanbanBoard)
-        debug("Kanban board added to main frame")
+        boardContainer:AddChild(kanbanBoard)
+        debug("Kanban board added to container")
     else
         debug("Failed to create kanban board")
         if not success then
@@ -102,7 +366,7 @@ function Kanban:CreateMainWindow()
         local fallbackLabel = AceGUI:Create("Label")
         fallbackLabel:SetText("Kanban board failed to load. Check for errors.")
         fallbackLabel:SetColor(1, 0, 0)
-        self.mainFrame:AddChild(fallbackLabel)
+        boardContainer:AddChild(fallbackLabel)
         
         -- Add a simple test button
         local testButton = AceGUI:Create("Button")
@@ -111,8 +375,11 @@ function Kanban:CreateMainWindow()
         testButton:SetCallback("OnClick", function()
             debug("Test button clicked!")
         end)
-        self.mainFrame:AddChild(testButton)
+        boardContainer:AddChild(testButton)
     end
+    
+    -- Add the board container to the main frame
+    self.mainFrame:AddChild(boardContainer)
     
     debug("CreateMainWindow completed")
 end 

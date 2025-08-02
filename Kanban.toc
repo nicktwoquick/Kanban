@@ -13,4 +13,13 @@ libs\AceConfig-3.0\AceConfig-3.0.lua
 
 # Core files
 Kanban.lua
+
+# Modules
+modules\Utils.lua
+modules\TaskManager.lua
+modules\UIComponents.lua
+modules\Dialogs.lua
+modules\Board.lua
+
+# Legacy compatibility
 Kanban_GUI.lua 
