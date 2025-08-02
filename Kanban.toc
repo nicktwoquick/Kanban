@@ -1,0 +1,16 @@
+## Interface: 11501
+## Title: Kanban
+## Notes: A kanban-style to-do list for WoW Classic Anniversary
+## Author: Your Name
+## Version: 1.0.0
+## SavedVariables: KanbanDB
+
+# Libraries (load first)
+libs\LibStub\LibStub.lua
+libs\AceAddon-3.0\AceAddon-3.0.lua
+libs\AceGUI-3.0\AceGUI-3.0.lua
+libs\AceConfig-3.0\AceConfig-3.0.lua
+
+# Core files
+Kanban.lua
+Kanban_GUI.lua 
