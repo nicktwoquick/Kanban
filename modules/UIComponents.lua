@@ -89,8 +89,10 @@ local function createColumn(columnData, parentFrame)
     -- Create a simple column group with title
     local columnGroup = AceGUI:Create("InlineGroup")
     columnGroup:SetLayout("List")
+    columnGroup:SetFullHeight(true)
     columnGroup:SetWidth(220)
-    columnGroup:SetTitle(columnData.name) -- Add title to the column group
+    columnGroup:SetPoint("BOTTOM")
+    debug("columnGroup:GetNumPoints() " .. columnGroup:GetNumPoints())
     
     -- Get tasks for this column
     local columnTasks = {}

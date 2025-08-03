@@ -29,27 +29,18 @@ local function CreateKanbanBoard(parentFrame)
     local scrollFrame = AceGUI:Create("ScrollFrame")
     scrollFrame:SetLayout("Flow") -- flow here because we want rows of our columns
     scrollFrame:SetFullWidth(true)
-    scrollFrame:SetFullHeight(true)
 
-    -- Create a columns container for the scroll frame
-    local columnsContainer = AceGUI:Create("SimpleGroup")
-    columnsContainer:SetLayout("Flow")
-    columnsContainer:SetFullWidth(true)
-    columnsContainer:SetFullHeight(true)
 
     -- Create columns directly without complex nesting    
     for _, columnData in ipairs(columns) do
         local column = UIComponents.createColumn and UIComponents.createColumn(columnData, parentFrame)
         if column then
-            columnsContainer:AddChild(column)
+            scrollFrame:AddChild(column)
             debug("Added column: " .. columnData.name)
         else
             debug("Failed to create column: " .. columnData.name)
         end
     end
-
-    -- Add the columns container to the scroll frame
-    scrollFrame:AddChild(columnsContainer)
 
     -- Add the scroll container to the board group
     scrollContainer:AddChild(scrollFrame)
