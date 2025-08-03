@@ -214,18 +214,8 @@ function Kanban:CreateMainWindow()
         widget:Release()
     end)
     
-    -- Set up ESC key handling
-    self.mainFrame.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC key pressed, closing window")
-            self.mainFrame:Hide()
-            self.mainFrame = nil
-            frame:Release()
-        end
-    end)
-    
-    -- Enable keyboard input for the frame
-    self.mainFrame.frame:EnableKeyboard(true)
+    -- Disable global keyboard input - we'll only enable it for text input fields
+    self.mainFrame.frame:EnableKeyboard(false)
     
     debug("About to create button row")
     
@@ -305,11 +295,12 @@ function Kanban:CreateMainWindow()
     
     -- Create the kanban board container with Flow layout for horizontal columns
     local boardContainer = AceGUI:Create("InlineGroup")
-    boardContainer:SetLayout("Fill") -- This is a REQUIREMENT if children will use auto size
+    boardContainer:SetLayout("Flow") -- Use Flow layout to arrange columns horizontally
+    boardContainer:SetTitle("Kanban Board")
     boardContainer:SetWidth(880)
-    -- Set a specific height for the board container to ensure proper sizing
-    -- Window (700) - Window padding (57) - Button row (60) = 583px available
-    boardContainer:SetHeight(583)
+
+
+    -- now we add the kanban board to the flow container
     
     -- Add the kanban board with error handling
     local success, kanbanBoard = pcall(function()
@@ -327,24 +318,6 @@ function Kanban:CreateMainWindow()
         debug("Kanban board added to container")
     else
         debug("Failed to create kanban board")
-        if not success then
-            debug("Error: " .. tostring(kanbanBoard))
-        end
-        
-        -- Add fallback content
-        local fallbackLabel = AceGUI:Create("Label")
-        fallbackLabel:SetText("Kanban board failed to load. Check for errors.")
-        fallbackLabel:SetColor(1, 0, 0)
-        boardContainer:AddChild(fallbackLabel)
-        
-        -- Add a simple test button
-        local testButton = AceGUI:Create("Button")
-        testButton:SetText("Test Button")
-        testButton:SetWidth(120)
-        testButton:SetCallback("OnClick", function()
-            debug("Test button clicked!")
-        end)
-        boardContainer:AddChild(testButton)
     end
     
     -- Add the board container to the main frame
