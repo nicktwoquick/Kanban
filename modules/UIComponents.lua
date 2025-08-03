@@ -13,7 +13,7 @@ local debug = Utils.debug or function(msg) print("|cFF00FF00Kanban|r: " .. msg) 
 
 -- Create a task card widget
 local function createTaskCard(task, parentFrame)
-    debug("Creating task card for: " .. task.title)
+    debug("Creating task card for: " .. task.title .. " (ID: " .. task.id .. ", Status: " .. task.status .. ")")
     
     local cardGroup = AceGUI:Create("InlineGroup")
     cardGroup:SetLayout("Flow")
@@ -58,16 +58,12 @@ local function createTaskCard(task, parentFrame)
                 debug("Move button clicked for task " .. task.id .. " to " .. column.name)
                 if TaskManager.moveTask and TaskManager.moveTask(task.id, column.name) then
                     debug("Task moved successfully, refreshing board")
-                    -- Use the new lightweight board refresh
-                    if _G.Kanban and _G.Kanban.Board and _G.Kanban.Board.RefreshBoard then
-                        debug("Using Board.RefreshBoard for task move")
-                        _G.Kanban.Board:RefreshBoard()
+                    -- Use the proper refresh method that releases and recreates the window
+                    if _G.Kanban and _G.Kanban.RefreshMainWindow then
+                        debug("Using RefreshMainWindow for task move")
+                        _G.Kanban:RefreshMainWindow()
                     else
-                        debug("Board.RefreshBoard not available, trying direct refresh")
-                        -- Try direct refresh if Board module not available
-                        if _G.Kanban and _G.Kanban.RefreshMainWindow then
-                            _G.Kanban:RefreshMainWindow()
-                        end
+                        debug("RefreshMainWindow not available")
                     end
                 else
                     debug("Failed to move task")
@@ -79,6 +75,7 @@ local function createTaskCard(task, parentFrame)
     
     cardGroup:AddChild(buttonGroup)
     
+    debug("Task card created successfully for: " .. task.title)
     return cardGroup
 end
 
@@ -115,9 +112,15 @@ local function createColumn(columnData, parentFrame)
     end
     
     -- Add task cards
+    debug("Adding " .. #columnTasks .. " task cards to column " .. columnData.name)
     for _, task in ipairs(columnTasks) do
         local taskCard = createTaskCard(task, parentFrame)
-        columnGroup:AddChild(taskCard)
+        if taskCard then
+            columnGroup:AddChild(taskCard)
+            debug("Added task card for: " .. task.title)
+        else
+            debug("Failed to create task card for: " .. task.title)
+        end
     end
     
     -- Remove the add task button since it's now in the CRUD button row

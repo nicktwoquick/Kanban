@@ -71,40 +71,48 @@ end
 function Kanban:RefreshMainWindow()
     debug("RefreshMainWindow called")
     
-    -- Defensive check: ensure the frame is valid before trying to refresh
-    if self.mainFrame and not self.mainFrame:IsValid() then
-        debug("Main frame is invalid, clearing reference")
-        self.mainFrame = nil
-    end
+    local success, error = pcall(function()
+        -- Check if main frame exists
+        if self.mainFrame then
+            debug("Main frame exists, forcing complete refresh")
+            -- Store current window position and visibility
+            local wasShown = self.mainFrame:IsShown()
+            debug("Window was shown: " .. tostring(wasShown))
+            
+            -- Force a complete cleanup
+            debug("Releasing main frame")
+            self.mainFrame:Release()
+            self.mainFrame = nil
+            
+            -- Create a new window immediately
+            debug("Creating new main window")
+            self:CreateMainWindow()
+            
+            -- Show the window if it was previously shown
+            if self.mainFrame and wasShown then
+                debug("Showing newly created window")
+                self.mainFrame:Show()
+            end
+            
+            -- Force a UI update
+            if self.mainFrame then
+                debug("Forcing layout update")
+                self.mainFrame:DoLayout()
+            end
+            
+            debug("RefreshMainWindow completed successfully")
+        else
+            debug("No main frame exists, creating new window")
+            -- Create new window if none exists
+            self:CreateMainWindow()
+            if self.mainFrame then
+                self.mainFrame:Show()
+            end
+        end
+    end)
     
-    if self.mainFrame then
-        debug("Main frame exists, forcing complete refresh")
-        -- Store current window position and visibility
-        local wasShown = self.mainFrame:IsShown()
-        
-        -- Force a complete cleanup
-        self.mainFrame:Release()
-        self.mainFrame = nil
-        
-        -- Create a new window immediately
-        self:CreateMainWindow()
-        
-        -- Show the window if it was previously shown
-        if self.mainFrame and wasShown then
-            self.mainFrame:Show()
-        end
-        
-        -- Force a UI update
-        if self.mainFrame then
-            self.mainFrame:DoLayout()
-        end
-    else
-        debug("No main frame exists, creating new window")
-        -- Create new window if none exists
-        self:CreateMainWindow()
-        if self.mainFrame then
-            self.mainFrame:Show()
-        end
+    if not success then
+        debug("RefreshMainWindow failed with error: " .. tostring(error))
     end
 end
 
@@ -182,15 +190,18 @@ end
 function Kanban:CreateMainWindow()
     debug("CreateMainWindow called")
     
-    -- Defensive check: if a main frame already exists, release it first
-    if self.mainFrame then
-        debug("Main frame already exists, releasing it first")
-        self.mainFrame:Release()
-        self.mainFrame = nil
-    end
-    
-    -- Create the main frame
-    self.mainFrame = AceGUI:Create("Frame")
+    local success, error = pcall(function()
+        -- Defensive check: if a main frame already exists, release it first
+        if self.mainFrame then
+            debug("Main frame already exists, releasing it first")
+            self.mainFrame:Release()
+            self.mainFrame = nil
+        end
+        
+        -- Create the main frame
+        debug("Creating main frame with AceGUI")
+        self.mainFrame = AceGUI:Create("Frame")
+        debug("Main frame created: " .. tostring(self.mainFrame ~= nil))
     
     -- Initialize refresh counter if it doesn't exist
     if not self.refreshCount then
@@ -242,14 +253,9 @@ function Kanban:CreateMainWindow()
     refreshButton:SetCallback("OnClick", function()
         debug("Refresh button clicked")
         
-        -- Use the new lightweight board refresh
-        if self.Board and self.Board.RefreshBoard then
-            debug("Using Board.RefreshBoard for lightweight refresh")
-            self.Board:RefreshBoard()
-        else
-            debug("Board.RefreshBoard not available, falling back to RefreshMainWindow")
-            self:RefreshMainWindow()
-        end
+        -- Use the proper refresh method that releases and recreates the window
+        debug("Using RefreshMainWindow for complete refresh")
+        self:RefreshMainWindow()
         
         debug("Refresh button completed")
     end)
@@ -275,14 +281,9 @@ function Kanban:CreateMainWindow()
             local success = self.TaskManager.moveTask(1, "In Progress")
             debug("Test move result: " .. tostring(success))
             if success then
-                -- Use the new lightweight board refresh
-                if self.Board and self.Board.RefreshBoard then
-                    debug("Using Board.RefreshBoard after test move")
-                    self.Board:RefreshBoard()
-                else
-                    debug("Board.RefreshBoard not available, falling back to RefreshMainWindow")
-                    self:RefreshMainWindow()
-                end
+                -- Use the proper refresh method that releases and recreates the window
+                debug("Using RefreshMainWindow after test move")
+                self:RefreshMainWindow()
             end
         end
     end)
@@ -323,5 +324,14 @@ function Kanban:CreateMainWindow()
     -- Add the board container to the main frame
     self.mainFrame:AddChild(boardContainer)
     
-    debug("CreateMainWindow completed")
+        debug("CreateMainWindow completed successfully")
+        debug("Main frame created: " .. tostring(self.mainFrame ~= nil))
+        if self.mainFrame then
+            debug("Main frame title: " .. tostring(self.mainFrame:GetTitle()))
+        end
+    end)
+    
+    if not success then
+        debug("CreateMainWindow failed with error: " .. tostring(error))
+    end
 end 

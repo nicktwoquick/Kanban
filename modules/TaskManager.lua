@@ -53,6 +53,13 @@ local function moveTask(taskId, newStatus)
             task.status = newStatus
             debug("Moved task '" .. task.title .. "' from " .. oldStatus .. " to " .. newStatus)
             debug("Task data after move: ID=" .. task.id .. ", Title=" .. task.title .. ", Status=" .. task.status)
+            
+            -- Debug: Show all tasks after the move
+            debug("All tasks after move:")
+            for i, t in ipairs(tasks) do
+                debug("  " .. i .. ". ID=" .. t.id .. ", Title=" .. t.title .. ", Status=" .. t.status)
+            end
+            
             return true
         end
     end

@@ -26,13 +26,10 @@ local function CreateKanbanBoard(parentFrame)
     end
 end
 
-local function RefreshBoard()
-    if Board and Board.RefreshBoard then
-        Board:RefreshBoard()
-    else
-        debug("Board module not available")
-    end
-end
+-- Note: RefreshBoard function removed - use RefreshMainWindow() instead
+-- The RefreshBoard approach of manipulating existing children doesn't work properly
+-- with AceGUI widgets. Instead, we use the proper RefreshMainWindow() method
+-- that releases and recreates the entire window.
 
 local function ShowAddTaskDialog()
     if Dialogs and Dialogs.ShowAddTaskDialog then
@@ -45,7 +42,6 @@ end
 -- Store functions in global table for backward compatibility
 _G.Kanban_GUI_Functions = {
     CreateKanbanBoard = CreateKanbanBoard,
-    RefreshBoard = RefreshBoard,
     ShowAddTaskDialog = ShowAddTaskDialog
 }
 
@@ -56,7 +52,6 @@ if addon then
     end
     
     addon.GUI.CreateKanbanBoard = CreateKanbanBoard
-    addon.GUI.RefreshBoard = RefreshBoard
     addon.GUI.ShowAddTaskDialog = ShowAddTaskDialog
     
     debug("Legacy GUI functions attached to addon")

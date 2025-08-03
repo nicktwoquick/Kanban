@@ -102,16 +102,13 @@ local function ShowAddTaskDialog()
                 TaskManager.addTask(title, description, priority)
                 -- Release the dialog first
                 dialog:Release()
-                -- Then refresh the board using the lightweight refresh
+                -- Then refresh the board using the proper refresh method
                 local mainAddon = _G.Kanban
-                if mainAddon and mainAddon.Board and mainAddon.Board.RefreshBoard then
-                    debug("Add dialog - using Board.RefreshBoard for lightweight refresh")
-                    mainAddon.Board:RefreshBoard()
+                if mainAddon and mainAddon.RefreshMainWindow then
+                    debug("Add dialog - using RefreshMainWindow for complete refresh")
+                    mainAddon:RefreshMainWindow()
                 else
-                    debug("Add dialog - Board.RefreshBoard not available, falling back to RefreshMainWindow")
-                    if mainAddon and mainAddon.RefreshMainWindow then
-                        mainAddon:RefreshMainWindow()
-                    end
+                    debug("Add dialog - RefreshMainWindow not available")
                 end
             else
                 dialog:Release()
@@ -236,16 +233,13 @@ local function ShowEditTaskDialog(taskId)
                 })
                 -- Release the dialog first
                 dialog:Release()
-                -- Then refresh the board using the lightweight refresh
+                -- Then refresh the board using the proper refresh method
                 local mainAddon = _G.Kanban
-                if mainAddon and mainAddon.Board and mainAddon.Board.RefreshBoard then
-                    debug("Edit dialog - using Board.RefreshBoard for lightweight refresh")
-                    mainAddon.Board:RefreshBoard()
+                if mainAddon and mainAddon.RefreshMainWindow then
+                    debug("Edit dialog - using RefreshMainWindow for complete refresh")
+                    mainAddon:RefreshMainWindow()
                 else
-                    debug("Edit dialog - Board.RefreshBoard not available, falling back to RefreshMainWindow")
-                    if mainAddon and mainAddon.RefreshMainWindow then
-                        mainAddon:RefreshMainWindow()
-                    end
+                    debug("Edit dialog - RefreshMainWindow not available")
                 end
             else
                 dialog:Release()
@@ -305,19 +299,15 @@ local function ShowConfirmClearDialog()
             TaskManager.clearAllTasks()
             -- Release the dialog first
             dialog:Release()
-            -- Then refresh the board using the lightweight refresh
+            -- Then refresh the board using the proper refresh method
             local mainAddon = _G.Kanban
             debug("Clear dialog - mainAddon: " .. tostring(mainAddon ~= nil))
-            if mainAddon and mainAddon.Board and mainAddon.Board.RefreshBoard then
-                debug("Clear dialog - using Board.RefreshBoard for lightweight refresh")
-                mainAddon.Board:RefreshBoard()
+            if mainAddon and mainAddon.RefreshMainWindow then
+                debug("Clear dialog - using RefreshMainWindow for complete refresh")
+                mainAddon:RefreshMainWindow()
+                debug("Clear dialog - RefreshMainWindow call completed")
             else
-                debug("Clear dialog - Board.RefreshBoard not available, falling back to RefreshMainWindow")
-                if mainAddon and mainAddon.RefreshMainWindow then
-                    debug("Clear dialog - calling RefreshMainWindow")
-                    mainAddon:RefreshMainWindow()
-                    debug("Clear dialog - RefreshMainWindow call completed")
-                end
+                debug("Clear dialog - RefreshMainWindow not available")
             end
         else
             dialog:Release()
@@ -380,16 +370,13 @@ local function ShowConfirmDeleteDialog(taskId)
             TaskManager.deleteTask(taskId)
             -- Release the dialog first
             dialog:Release()
-            -- Then refresh the board using the lightweight refresh
+            -- Then refresh the board using the proper refresh method
             local mainAddon = _G.Kanban
-            if mainAddon and mainAddon.Board and mainAddon.Board.RefreshBoard then
-                debug("Delete dialog - using Board.RefreshBoard for lightweight refresh")
-                mainAddon.Board:RefreshBoard()
+            if mainAddon and mainAddon.RefreshMainWindow then
+                debug("Delete dialog - using RefreshMainWindow for complete refresh")
+                mainAddon:RefreshMainWindow()
             else
-                debug("Delete dialog - Board.RefreshBoard not available, falling back to RefreshMainWindow")
-                if mainAddon and mainAddon.RefreshMainWindow then
-                    mainAddon:RefreshMainWindow()
-                end
+                debug("Delete dialog - RefreshMainWindow not available")
             end
         else
             dialog:Release()

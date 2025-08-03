@@ -38,11 +38,11 @@ This directory contains the refactored modules for the Kanban addon, organized b
   - Form handling and validation
 
 ### `Board.lua`
-- **Purpose**: Main board layout and refresh logic
+- **Purpose**: Main board layout and creation logic
 - **Contains**:
   - `CreateKanbanBoard()` - Create the main board layout
-  - `RefreshBoard()` - Refresh the entire board
   - Orchestrates columns and overall layout
+  - **Note**: Refresh functionality moved to `RefreshMainWindow()` in main addon
 
 ## Benefits of This Structure
 
