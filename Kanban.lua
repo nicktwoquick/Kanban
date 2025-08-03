@@ -173,11 +173,7 @@ function Kanban:RefreshComponents()
     -- Add the board container to the main frame
     self.mainFrame:AddChild(boardContainer)
     
-    -- Refresh the task dropdown if the function exists
-    if self.refreshTaskDropdown then
-        debug("Refreshing task dropdown")
-        self.refreshTaskDropdown()
-    end
+    -- Task dropdown refresh removed - no longer needed
     
     debug("RefreshComponents completed")
 end
@@ -231,40 +227,15 @@ function Kanban:CreateMainWindow()
     -- Enable keyboard input for the frame
     self.mainFrame.frame:EnableKeyboard(true)
     
-    debug("About to create CRUD button row")
+    debug("About to create button row")
     
-    -- Create CRUD button row that spans the full width
-    local crudButtonGroup = AceGUI:Create("InlineGroup")
-    crudButtonGroup:SetLayout("Flow")
-    crudButtonGroup:SetWidth(880) -- Full width minus some padding
-    crudButtonGroup:SetHeight(60) -- Increased height for better spacing
+    -- Create button row that spans the full width
+    local buttonGroup = AceGUI:Create("InlineGroup")
+    buttonGroup:SetLayout("Flow")
+    buttonGroup:SetWidth(880) -- Full width minus some padding
+    buttonGroup:SetHeight(60) -- Increased height for better spacing
     
-    -- Task selection dropdown for edit/delete operations
-    local taskDropdown = AceGUI:Create("Dropdown")
-    taskDropdown:SetWidth(200)
-    taskDropdown:SetLabel("Select Task:")
-    
-    -- Function to refresh task dropdown
-    local function refreshTaskDropdown()
-        local tasks = {}
-        if self.TaskManager and self.TaskManager.getAllTasks then
-            local allTasks = self.TaskManager.getAllTasks()
-            for _, task in ipairs(allTasks) do
-                tasks[task.id] = task.title .. " (" .. task.status .. ")"
-            end
-        end
-        taskDropdown:SetList(tasks)
-        taskDropdown:SetValue(nil)
-    end
-    
-    -- Store the refresh function for later use
-    self.refreshTaskDropdown = refreshTaskDropdown
-    
-    -- Initial population of dropdown
-    refreshTaskDropdown()
-    crudButtonGroup:AddChild(taskDropdown)
-    
-    -- Add CRUD buttons
+    -- Add Task button
     local addButton = AceGUI:Create("Button")
     addButton:SetText("+ Add Task")
     addButton:SetWidth(120)
@@ -273,29 +244,7 @@ function Kanban:CreateMainWindow()
             self.Dialogs:ShowAddTaskDialog()
         end
     end)
-    crudButtonGroup:AddChild(addButton)
-    
-    local editButton = AceGUI:Create("Button")
-    editButton:SetText("Edit Task")
-    editButton:SetWidth(120)
-    editButton:SetCallback("OnClick", function()
-        local selectedTaskId = taskDropdown:GetValue()
-        if selectedTaskId and self.Dialogs and self.Dialogs.ShowEditTaskDialog then
-            self.Dialogs:ShowEditTaskDialog(selectedTaskId)
-        end
-    end)
-    crudButtonGroup:AddChild(editButton)
-    
-    local deleteButton = AceGUI:Create("Button")
-    deleteButton:SetText("Delete Task")
-    deleteButton:SetWidth(120)
-    deleteButton:SetCallback("OnClick", function()
-        local selectedTaskId = taskDropdown:GetValue()
-        if selectedTaskId and self.Dialogs and self.Dialogs.ShowConfirmDeleteDialog then
-            self.Dialogs:ShowConfirmDeleteDialog(selectedTaskId)
-        end
-    end)
-    crudButtonGroup:AddChild(deleteButton)
+    buttonGroup:AddChild(addButton)
     
     local refreshButton = AceGUI:Create("Button")
     refreshButton:SetText("Refresh")
@@ -314,7 +263,7 @@ function Kanban:CreateMainWindow()
         
         debug("Refresh button completed")
     end)
-    crudButtonGroup:AddChild(refreshButton)
+    buttonGroup:AddChild(refreshButton)
     
     local clearButton = AceGUI:Create("Button")
     clearButton:SetText("Clear All")
@@ -324,7 +273,7 @@ function Kanban:CreateMainWindow()
             self.Dialogs:ShowConfirmClearDialog()
         end
     end)
-    crudButtonGroup:AddChild(clearButton)
+    buttonGroup:AddChild(clearButton)
     
     -- Add a test button to manually move the sample task
     local testMoveButton = AceGUI:Create("Button")
@@ -347,10 +296,10 @@ function Kanban:CreateMainWindow()
             end
         end
     end)
-    crudButtonGroup:AddChild(testMoveButton)
+    buttonGroup:AddChild(testMoveButton)
     
-    -- Add the CRUD button row to the main frame
-    self.mainFrame:AddChild(crudButtonGroup)
+    -- Add the button row to the main frame
+    self.mainFrame:AddChild(buttonGroup)
     
     debug("About to create kanban board")
     
@@ -359,7 +308,7 @@ function Kanban:CreateMainWindow()
     boardContainer:SetLayout("Fill") -- This is a REQUIREMENT if children will use auto size
     boardContainer:SetWidth(880)
     -- Set a specific height for the board container to ensure proper sizing
-    -- Window (700) - Window padding (57) - CRUD row (60) = 583px available
+    -- Window (700) - Window padding (57) - Button row (60) = 583px available
     boardContainer:SetHeight(583)
     
     -- Add the kanban board with error handling
