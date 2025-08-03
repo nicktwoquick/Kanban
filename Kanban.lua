@@ -206,12 +206,30 @@ function Kanban:CreateMainWindow()
     self.mainFrame:SetLayout("List") -- Changed from Flow to List for top alignment
     self.mainFrame:SetWidth(900)
     self.mainFrame:SetHeight(700)
+    
+    -- Disable resizing to make the window static size
+    self.mainFrame:EnableResize(false)
+    
+    -- Set up close callback
     self.mainFrame:SetCallback("OnClose", function(widget)
         debug("Window close callback triggered")
         -- Clear the reference so the window can be recreated
         self.mainFrame = nil
         widget:Release()
     end)
+    
+    -- Set up ESC key handling
+    self.mainFrame.frame:SetScript("OnKeyDown", function(frame, key)
+        if key == "ESCAPE" then
+            debug("ESC key pressed, closing window")
+            self.mainFrame:Hide()
+            self.mainFrame = nil
+            frame:Release()
+        end
+    end)
+    
+    -- Enable keyboard input for the frame
+    self.mainFrame.frame:EnableKeyboard(true)
     
     debug("About to create CRUD button row")
     
