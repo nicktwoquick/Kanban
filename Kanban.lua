@@ -356,7 +356,7 @@ function Kanban:CreateMainWindow()
     
     -- Create the kanban board container with Flow layout for horizontal columns
     local boardContainer = AceGUI:Create("InlineGroup")
-    boardContainer:SetLayout("Flow")
+    boardContainer:SetLayout("Fill") -- This is a REQUIREMENT if children will use auto size
     boardContainer:SetWidth(880)
     -- Set a specific height for the board container to ensure proper sizing
     -- Window (700) - Window padding (57) - CRUD row (60) = 583px available

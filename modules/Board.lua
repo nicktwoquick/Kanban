@@ -51,9 +51,7 @@ local function CreateKanbanBoard(parentFrame)
     scrollFrame:SetLayout("Flow")
     scrollFrame:SetWidth(700)
     scrollFrame:SetFullWidth(true)
-    -- Calculate available height: Board container (583) - InlineGroup padding (20) - Title row (40) - Title row padding (20)
-    -- 583 - 20 - 40 - 20 = 503px available for scroll frame
-    scrollFrame:SetHeight(503)
+    scrollFrame:SetFullHeight(true) -- Let it automatically size to fit available space
     
     -- Create columns (without headers)
     for _, columnData in ipairs(columns) do
