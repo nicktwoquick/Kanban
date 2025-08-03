@@ -87,7 +87,6 @@ local function createColumn(columnData, parentFrame)
     local columnGroup = AceGUI:Create("InlineGroup")
     columnGroup:SetLayout("List")
     columnGroup:SetFullHeight(true)
-    columnGroup:SetRelativeWidth(0.3)
     
     -- Get tasks for this column
     local columnTasks = {}

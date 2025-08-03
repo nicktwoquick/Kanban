@@ -66,6 +66,21 @@ local function CreateKanbanBoard(parentFrame)
     -- Create a simple group that will work with Flow layout
     local boardGroup = AceGUI:Create("SimpleGroup")
     boardGroup:SetLayout("Flow") -- Use Flow layout to arrange columns horizontally
+
+    -- We add our title row here with our labels for each column
+    local titleRow = AceGUI:Create("SimpleGroup")
+    titleRow:SetLayout("Flow")
+    titleRow:SetFullWidth(true)
+    titleRow:SetHeight(30)
+    
+    for _, columnData in ipairs(columns) do
+        local label = AceGUI:Create("Label")
+        label:SetText(columnData.name)
+        label:SetWidth(250)
+        titleRow:AddChild(label)
+    end
+    
+    boardGroup:AddChild(titleRow)
     
     -- Add the scroll container to the board group
     boardGroup:AddChild(scrollContainer)

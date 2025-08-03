@@ -298,7 +298,7 @@ function Kanban:CreateMainWindow()
     local boardContainer = AceGUI:Create("InlineGroup")
     boardContainer:SetLayout("Fill") -- Use Flow layout to arrange columns horizontally
     boardContainer:SetWidth(880)
-    boardContainer:SetHeight(583)
+    boardContainer:SetHeight(540)
 
 
     -- now we add the kanban board to the flow container
