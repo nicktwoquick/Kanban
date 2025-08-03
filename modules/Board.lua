@@ -22,7 +22,7 @@ local function CreateKanbanBoard(parentFrame)
     -- Create a parent container for a scroll board which requires fill layout
     local scrollContainer = AceGUI:Create("SimpleGroup")
     scrollContainer:SetLayout("Fill")
-    scrollContainer:SetHeight(600)
+    scrollContainer:SetFullHeight(true) -- TODO: parent is touch to large
     scrollContainer:SetFullWidth(true)
     
     -- Create the actual scroll frame for items
