@@ -16,23 +16,56 @@ local debug = Utils.debug or function(msg) print("|cFF00FF00Kanban|r: " .. msg) 
 local function CreateKanbanBoard(parentFrame)
     debug("CreateKanbanBoard called")
     
-    local boardGroup = AceGUI:Create("InlineGroup")
-    boardGroup:SetLayout("Flow")
+    local boardGroup = AceGUI:Create("SimpleGroup")
+    boardGroup:SetLayout("List")
     boardGroup:SetWidth(700)
-    boardGroup:SetHeight(550)
+    boardGroup:SetFullHeight(true) -- Use full available height
+    boardGroup:SetFullWidth(true)
     
     local columns = Utils.COLUMNS or {}
     debug("Creating " .. #columns .. " columns")
     
-    -- Create columns
+    -- Create title row
+    local titleRow = AceGUI:Create("InlineGroup")
+    titleRow:SetLayout("Flow")
+    titleRow:SetWidth(700)
+    titleRow:SetHeight(40) -- Keep fixed height for title row
+    titleRow:SetFullWidth(true)
+    
+    -- Add column titles
+    for _, columnData in ipairs(columns) do
+        local titleLabel = AceGUI:Create("Label")
+        titleLabel:SetText(columnData.name)
+        titleLabel:SetColor(unpack(columnData.color))
+        titleLabel:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
+        titleLabel:SetWidth(220)
+        titleLabel:SetHeight(30)
+        titleLabel:SetJustifyH("CENTER")
+        titleRow:AddChild(titleLabel)
+    end
+    
+    boardGroup:AddChild(titleRow)
+    
+    -- Create a scrollable container for all columns
+    local scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame:SetLayout("Flow")
+    scrollFrame:SetWidth(700)
+    scrollFrame:SetFullWidth(true)
+    -- Calculate available height: Board container (583) - InlineGroup padding (20) - Title row (40) - Title row padding (20)
+    -- 583 - 20 - 40 - 20 = 503px available for scroll frame
+    scrollFrame:SetHeight(503)
+    
+    -- Create columns (without headers)
     for _, columnData in ipairs(columns) do
         local column = UIComponents.createColumn and UIComponents.createColumn(columnData, parentFrame)
         if column then
-            boardGroup:AddChild(column)
+            scrollFrame:AddChild(column)
         else
             debug("Failed to create column: " .. columnData.name)
         end
     end
+    
+    boardGroup:AddChild(scrollFrame)
     
     debug("Kanban board creation complete")
     return boardGroup

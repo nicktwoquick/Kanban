@@ -140,7 +140,9 @@ function Kanban:RefreshComponents()
     local boardContainer = AceGUI:Create("InlineGroup")
     boardContainer:SetLayout("Flow")
     boardContainer:SetWidth(880)
-    boardContainer:SetHeight(590)
+    -- Set a specific height for the board container to ensure proper sizing
+    -- Window (700) - Window padding (57) - CRUD row (60) = 583px available
+    boardContainer:SetHeight(583)
     
     -- Add the kanban board with error handling
     local success, kanbanBoard = pcall(function()
@@ -338,7 +340,9 @@ function Kanban:CreateMainWindow()
     local boardContainer = AceGUI:Create("InlineGroup")
     boardContainer:SetLayout("Flow")
     boardContainer:SetWidth(880)
-    boardContainer:SetHeight(590) -- Adjusted for taller CRUD button row
+    -- Set a specific height for the board container to ensure proper sizing
+    -- Window (700) - Window padding (57) - CRUD row (60) = 583px available
+    boardContainer:SetHeight(583)
     
     -- Add the kanban board with error handling
     local success, kanbanBoard = pcall(function()

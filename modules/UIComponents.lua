@@ -86,16 +86,12 @@ end
 local function createColumn(columnData, parentFrame)
     debug("Creating column: " .. columnData.name)
     
+    -- Create a simple column group (no individual scrolling)
     local columnGroup = AceGUI:Create("InlineGroup")
     columnGroup:SetLayout("List")
     columnGroup:SetWidth(220)
-    columnGroup:SetHeight(500)
-    
-    -- Column header
-    local headerLabel = AceGUI:Create("Label")
-    headerLabel:SetText(columnData.name)
-    headerLabel:SetColor(unpack(columnData.color))
-    columnGroup:AddChild(headerLabel)
+    columnGroup:SetFullWidth(true)
+    -- No fixed height - will expand with content and be controlled by parent scroll frame
     
     -- Get tasks for this column
     local columnTasks = {}
