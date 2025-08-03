@@ -22,14 +22,32 @@ local function CreateKanbanBoard(parentFrame)
     -- Create a parent container for a scroll board which requires fill layout
     local scrollContainer = AceGUI:Create("SimpleGroup")
     scrollContainer:SetLayout("Fill")
-    scrollContainer:SetFullHeight(true)
-    scrollContainer:SetWidth(880)
-
+    scrollContainer:SetHeight(600)
+    scrollContainer:SetFullWidth(true)
+    
     -- Create the actual scroll frame for items
     local scrollFrame = AceGUI:Create("ScrollFrame")
-    scrollFrame:SetLayout("Flow") -- flow here because we want rows of our columns
+    scrollFrame:SetLayout("Table") -- Use Table layout for proper column arrangement
     scrollFrame:SetFullWidth(true)
-
+    scrollFrame:SetFullHeight(true)
+    
+    -- Set up table columns: equal width for all columns, left-aligned
+    local columnCount = #columns
+    local columnWidth = 1.0 / columnCount -- Equal width distribution
+    local tableConfig = {
+        columns = {}
+    }
+    
+    for i = 1, columnCount do
+        tableConfig.columns[i] = {
+            width = columnWidth,
+            align = "TOPLEFT"
+        }
+    end
+    tableConfig.spaceH = 10 -- Horizontal spacing between columns
+    
+    scrollFrame:SetUserData("table", tableConfig)
+    debug("Set up table layout with " .. columnCount .. " columns, each " .. (columnWidth * 100) .. "% width")
 
     -- Create columns directly without complex nesting    
     for _, columnData in ipairs(columns) do
@@ -248,6 +266,25 @@ local function RefreshBoard()
     debug("Recreating columns within existing kanban board")
     local columns = Utils.COLUMNS or {}
     debug("Creating " .. #columns .. " columns")
+    
+    -- Set up table layout configuration for the refresh
+    local columnCount = #columns
+    local columnWidth = 1.0 / columnCount -- Equal width distribution
+    local tableConfig = {
+        columns = {}
+    }
+    
+    for i = 1, columnCount do
+        tableConfig.columns[i] = {
+            width = columnWidth,
+            align = "TOPLEFT"
+        }
+    end
+    tableConfig.spaceH = 10 -- Horizontal spacing between columns
+    
+    -- Apply table configuration to the kanban board
+    kanbanBoard:SetUserData("table", tableConfig)
+    debug("Set up table layout with " .. columnCount .. " columns, each " .. (columnWidth * 100) .. "% width")
     
     for _, columnData in ipairs(columns) do
         debug("Creating column: " .. columnData.name)
