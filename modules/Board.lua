@@ -18,23 +18,48 @@ local function CreateKanbanBoard(parentFrame)
     
     local columns = Utils.COLUMNS or {}
     debug("Creating " .. #columns .. " columns")
-    
-    -- Create a simple group that will work with Flow layout
-    local boardGroup = AceGUI:Create("SimpleGroup")
-    boardGroup:SetLayout("Flow") -- Use Flow layout to arrange columns horizontally
-    boardGroup:SetFullWidth(true)
-    boardGroup:SetFullHeight(true)
-    
-    -- Create columns directly without complex nesting
+
+    -- Create a parent container for a scroll board which requires fill layout
+    local scrollContainer = AceGUI:Create("SimpleGroup")
+    scrollContainer:SetLayout("Fill")
+    scrollContainer:SetFullHeight(true)
+    scrollContainer:SetWidth(880)
+
+    -- Create the actual scroll frame for items
+    local scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame:SetLayout("Flow") -- flow here because we want rows of our columns
+    scrollFrame:SetFullWidth(true)
+    scrollFrame:SetFullHeight(true)
+
+    -- Create a columns container for the scroll frame
+    local columnsContainer = AceGUI:Create("SimpleGroup")
+    columnsContainer:SetLayout("Flow")
+    columnsContainer:SetFullWidth(true)
+    columnsContainer:SetFullHeight(true)
+
+    -- Create columns directly without complex nesting    
     for _, columnData in ipairs(columns) do
         local column = UIComponents.createColumn and UIComponents.createColumn(columnData, parentFrame)
         if column then
-            boardGroup:AddChild(column)
+            columnsContainer:AddChild(column)
             debug("Added column: " .. columnData.name)
         else
             debug("Failed to create column: " .. columnData.name)
         end
     end
+
+    -- Add the columns container to the scroll frame
+    scrollFrame:AddChild(columnsContainer)
+
+    -- Add the scroll container to the board group
+    scrollContainer:AddChild(scrollFrame)
+
+    -- Create a simple group that will work with Flow layout
+    local boardGroup = AceGUI:Create("SimpleGroup")
+    boardGroup:SetLayout("Flow") -- Use Flow layout to arrange columns horizontally
+    
+    -- Add the scroll container to the board group
+    boardGroup:AddChild(scrollContainer)
 
     debug("Kanban board creation complete")
     return boardGroup
