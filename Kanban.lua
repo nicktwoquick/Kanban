@@ -36,7 +36,7 @@ local defaults = {
 function Kanban:OnInitialize()
     -- Create slash command
     SLASH_KANBAN1 = "/kanban"
-    SLASH_KANBAN2 = "/kb"
+    SLASH_KANBAN2 = "/ka"
     SlashCmdList["KANBAN"] = function(msg)
         Kanban:ToggleWindow()
     end
@@ -55,7 +55,7 @@ function Kanban:OnInitialize()
         self.TaskManager:initialize()
     end
     
-    debug("Addon loaded. Type /kanban or /kb to open the window.")
+    debug("Addon loaded. Type /kanban or /ka to open the window.")
     debug("Global Kanban reference set: " .. tostring(_G.Kanban ~= nil))
 end
 
@@ -247,8 +247,15 @@ function Kanban:CreateMainWindow()
         widget:Release()
     end)
     
-    -- Disable global keyboard input - we'll only enable it for text input fields
-    self.mainFrame.frame:EnableKeyboard(false)
+    -- Add ESC key handling to close the window
+    self.mainFrame.frame:SetScript("OnKeyDown", function(frame, key)
+        if key == "ESCAPE" then
+            debug("ESC pressed, closing window")
+            self:ToggleWindow()
+        end
+    end)
+    
+
     
     debug("About to create button row")
     

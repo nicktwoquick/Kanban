@@ -22,14 +22,7 @@ local function ShowAddTaskDialog()
         widget:Release()
     end)
     
-    -- Enable keyboard input for dialog frame and handle ESC
-    dialog.frame:EnableKeyboard(true)
-    dialog.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed on add dialog frame, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     
     -- Title input
     local titleLabel = AceGUI:Create("Label")
@@ -41,14 +34,7 @@ local function ShowAddTaskDialog()
     titleEdit:SetCallback("OnEnterPressed", function(widget, event, text)
         widget:ClearFocus()
     end)
-    -- Enable keyboard input for text field and handle ESC
-    titleEdit.frame:EnableKeyboard(true)
-    titleEdit.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed in title field, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     dialog:AddChild(titleEdit)
     
     -- Description input
@@ -60,14 +46,7 @@ local function ShowAddTaskDialog()
     descEdit:SetWidth(350)
     descEdit:SetHeight(100)
     descEdit:SetNumLines(4)
-    -- Enable keyboard input for text field and handle ESC
-    descEdit.frame:EnableKeyboard(true)
-    descEdit.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed in description field, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     dialog:AddChild(descEdit)
     
     -- Priority dropdown
@@ -149,14 +128,7 @@ local function ShowEditTaskDialog(taskId)
         widget:Release()
     end)
     
-    -- Enable keyboard input for dialog frame and handle ESC
-    dialog.frame:EnableKeyboard(true)
-    dialog.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed on edit dialog frame, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     
     -- Title input
     local titleLabel = AceGUI:Create("Label")
@@ -169,14 +141,7 @@ local function ShowEditTaskDialog(taskId)
     titleEdit:SetCallback("OnEnterPressed", function(widget, event, text)
         widget:ClearFocus()
     end)
-    -- Enable keyboard input for text field and handle ESC
-    titleEdit.frame:EnableKeyboard(true)
-    titleEdit.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed in edit title field, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     dialog:AddChild(titleEdit)
     
     -- Description input
@@ -189,14 +154,7 @@ local function ShowEditTaskDialog(taskId)
     descEdit:SetHeight(100)
     descEdit:SetNumLines(4)
     descEdit:SetText(task.description)
-    -- Enable keyboard input for text field and handle ESC
-    descEdit.frame:EnableKeyboard(true)
-    descEdit.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed in edit description field, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     dialog:AddChild(descEdit)
     
     -- Priority dropdown
@@ -274,14 +232,7 @@ local function ShowConfirmClearDialog()
         widget:Release()
     end)
     
-    -- Enable keyboard input for dialog frame and handle ESC
-    dialog.frame:EnableKeyboard(true)
-    dialog.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed on clear dialog frame, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     
     -- Warning message
     local warningLabel = AceGUI:Create("Label")
@@ -345,14 +296,7 @@ local function ShowConfirmDeleteDialog(taskId)
         widget:Release()
     end)
     
-    -- Enable keyboard input for dialog frame and handle ESC
-    dialog.frame:EnableKeyboard(true)
-    dialog.frame:SetScript("OnKeyDown", function(frame, key)
-        if key == "ESCAPE" then
-            debug("ESC pressed on delete dialog frame, closing dialog")
-            dialog:Release()
-        end
-    end)
+
     
     -- Warning message
     local warningLabel = AceGUI:Create("Label")

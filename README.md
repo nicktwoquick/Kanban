@@ -18,7 +18,7 @@ A World of Warcraft addon for WoW Classic Anniversary featuring a kanban-style t
 
 ## Usage
 
-- Type `/kanban` or `/kb` to open the kanban window
+- Type `/kanban` or `/ka` to open the kanban window
 - The window can be moved by dragging the title bar
 - Click the X button to close the window
 
