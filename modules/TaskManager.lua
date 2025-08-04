@@ -13,6 +13,8 @@ local function getDB()
 end
 
 local tasks = {}
+local nextTaskId = 1 -- Track the next available task ID
+
 -- Initialize with sample data - we'll load from DB later when available
 tasks = {
     {
@@ -31,8 +33,24 @@ local function loadTasksFromDB()
     if db and db.profile and db.profile.tasks then
         tasks = db.profile.tasks
         debug("Loaded " .. #tasks .. " tasks from database")
+        
+        -- Load nextTaskId from database, or calculate it if not available
+        if db.profile.nextTaskId then
+            nextTaskId = db.profile.nextTaskId
+            debug("Loaded nextTaskId from database: " .. nextTaskId)
+        else
+            -- Fallback: calculate nextTaskId to be higher than any existing task ID
+            nextTaskId = 1
+            for _, task in ipairs(tasks) do
+                if task.id >= nextTaskId then
+                    nextTaskId = task.id + 1
+                end
+            end
+            debug("Calculated nextTaskId: " .. nextTaskId)
+        end
     else
         debug("No database or tasks found, using default sample task")
+        nextTaskId = 2 -- Since we have the sample task with ID 1
     end
 end
 
@@ -41,7 +59,8 @@ local function saveTasksToDB()
     local db = getDB()
     if db and db.profile then
         db.profile.tasks = tasks
-        debug("Saved " .. #tasks .. " tasks to database")
+        db.profile.nextTaskId = nextTaskId
+        debug("Saved " .. #tasks .. " tasks to database with nextTaskId: " .. nextTaskId)
     else
         debug("Database not available, tasks not saved")
     end
@@ -63,11 +82,16 @@ local function getAllTasks()
 end
 
 local function getTaskById(taskId)
-    for _, task in ipairs(tasks) do
+    debug("getTaskById called with taskId: " .. tostring(taskId))
+    debug("Available tasks:")
+    for i, task in ipairs(tasks) do
+        debug("  " .. i .. ". ID=" .. task.id .. ", Title=" .. task.title)
         if task.id == taskId then
+            debug("Found matching task: ID=" .. task.id .. ", Title=" .. task.title)
             return task
         end
     end
+    debug("No task found with ID: " .. tostring(taskId))
     return nil
 end
 
@@ -99,7 +123,7 @@ end
 
 local function addTask(title, description, priority)
     local newTask = {
-        id = #tasks + 1,
+        id = nextTaskId,
         title = title,
         description = description,
         status = "To-Do",
@@ -107,8 +131,9 @@ local function addTask(title, description, priority)
         priority = priority or "Medium"
     }
     table.insert(tasks, newTask)
+    nextTaskId = nextTaskId + 1 -- Increment for next task
     saveTasksToDB() -- Save to database
-    debug("Added new task: " .. title)
+    debug("Added new task: " .. title .. " with ID: " .. newTask.id)
     return newTask.id
 end
 

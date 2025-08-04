@@ -132,11 +132,13 @@ end
 
 -- Show edit task dialog
 local function ShowEditTaskDialog(taskId)
+    debug("ShowEditTaskDialog called with taskId: " .. tostring(taskId))
     local task = TaskManager.getTaskById and TaskManager.getTaskById(taskId)
     if not task then
-        debug("Task not found for editing")
+        debug("Task not found for editing with ID: " .. tostring(taskId))
         return
     end
+    debug("Found task for editing: ID=" .. task.id .. ", Title=" .. task.title)
     
     local dialog = AceGUI:Create("Frame")
     dialog:SetTitle("Edit Task")

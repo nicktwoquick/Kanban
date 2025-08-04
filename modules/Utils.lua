@@ -5,6 +5,10 @@ local addonName, addon = ...
 
 -- Debug function
 local function debug(message)
+    local db = _G.Kanban.db
+    if not db.profile.options.debug then
+        return
+    end
     print("|cFF00FF00Kanban|r: " .. message)
 end
 

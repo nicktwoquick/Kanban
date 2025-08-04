@@ -16,14 +16,19 @@ _G.Kanban = Kanban -- Make addon globally accessible for modules
 
 -- Debug function
 local function debug(message)
+    local db = _G.Kanban.db
+    if not db.profile.options.debug then
+        return
+    end
     print("|cFF00FF00Kanban|r: " .. message)
 end
 
 local defaults = {
     profile = {
       options = {
-        debug = true,
+        debug = false,
       },
+      nextTaskId = 2, -- Initialize nextTaskId to 2 since we start with sample task ID 1
     }
 }
 

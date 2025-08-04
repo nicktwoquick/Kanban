@@ -44,16 +44,17 @@ local function createTaskCard(task, parentFrame)
     end
     cardGroup:AddChild(priorityLabel)
     
-    -- Move buttons
+    -- Action buttons (move and delete)
     local buttonGroup = AceGUI:Create("InlineGroup")
     buttonGroup:SetLayout("Flow")
     buttonGroup:SetWidth(180)
     
+    -- Move buttons
     for _, column in ipairs(Utils.COLUMNS or {}) do
         if column.name ~= task.status then
             local moveButton = AceGUI:Create("Button")
             moveButton:SetText("→ " .. column.name)
-            moveButton:SetWidth(80)
+            -- moveButton:SetWidth(80)
             moveButton:SetCallback("OnClick", function()
                 debug("Move button clicked for task " .. task.id .. " to " .. column.name)
                 if TaskManager.moveTask and TaskManager.moveTask(task.id, column.name) then
@@ -72,6 +73,39 @@ local function createTaskCard(task, parentFrame)
             buttonGroup:AddChild(moveButton)
         end
     end
+    
+    -- Edit button
+    local editButton = AceGUI:Create("Button")
+    editButton:SetText("✏️ Edit")
+    -- editButton:SetWidth(80)
+    editButton:SetCallback("OnClick", function()
+        debug("Edit button clicked for task " .. task.id .. " with title: " .. task.title)
+        -- Show edit dialog
+        local Dialogs = _G.Kanban_Dialogs
+        if Dialogs and Dialogs.ShowEditTaskDialog then
+            debug("Calling ShowEditTaskDialog with taskId: " .. task.id)
+            Dialogs.ShowEditTaskDialog(task.id)
+        else
+            debug("Edit dialog not available")
+        end
+    end)
+    buttonGroup:AddChild(editButton)
+    
+    -- Delete button
+    local deleteButton = AceGUI:Create("Button")
+    deleteButton:SetText("🗑️ Delete")
+    -- deleteButton:SetWidth(80)
+    deleteButton:SetCallback("OnClick", function()
+        debug("Delete button clicked for task " .. task.id)
+        -- Show confirmation dialog
+        local Dialogs = _G.Kanban_Dialogs
+        if Dialogs and Dialogs.ShowConfirmDeleteDialog then
+            Dialogs.ShowConfirmDeleteDialog(task.id)
+        else
+            debug("Delete dialog not available")
+        end
+    end)
+    buttonGroup:AddChild(deleteButton)
     
     cardGroup:AddChild(buttonGroup)
     
@@ -121,19 +155,7 @@ local function createColumn(columnData, parentFrame)
             debug("Failed to create task card for: " .. task.title)
         end
     end
-    
-    -- Remove the add task button since it's now in the CRUD button row
-    -- if columnData.name == "To-Do" then
-    --     local addButton = AceGUI:Create("Button")
-    --     addButton:SetText("+ Add Task")
-    --     addButton:SetWidth(180)
-    --     addButton:SetCallback("OnClick", function()
-    --         if addon and addon.Dialogs and addon.Dialogs.ShowAddTaskDialog then
-    --             addon.Dialogs:ShowAddTaskDialog()
-    --         end
-    --     end)
-    --     columnGroup:AddChild(addButton)
-    -- end
+
     
     return columnGroup
 end
