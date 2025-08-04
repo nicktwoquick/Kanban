@@ -7,8 +7,14 @@ local addonName, addon = ...
 local Utils = _G.Kanban_Utils or {}
 local debug = Utils.debug or function(msg) print("|cFF00FF00Kanban|r: " .. msg) end
 
--- Task data structure
-local tasks = {
+-- Lazy database access - don't try to access it during module loading
+local function getDB()
+    return _G.Kanban and _G.Kanban.db
+end
+
+local tasks = {}
+-- Initialize with sample data - we'll load from DB later when available
+tasks = {
     {
         id = 1,
         title = "Sample Task",
@@ -18,6 +24,28 @@ local tasks = {
         priority = "Medium"
     }
 }
+
+-- Function to load tasks from database when available
+local function loadTasksFromDB()
+    local db = getDB()
+    if db and db.profile and db.profile.tasks then
+        tasks = db.profile.tasks
+        debug("Loaded " .. #tasks .. " tasks from database")
+    else
+        debug("No database or tasks found, using default sample task")
+    end
+end
+
+-- Function to save tasks to database when available
+local function saveTasksToDB()
+    local db = getDB()
+    if db and db.profile then
+        db.profile.tasks = tasks
+        debug("Saved " .. #tasks .. " tasks to database")
+    else
+        debug("Database not available, tasks not saved")
+    end
+end
 
 -- Task management functions
 local function getTasksByStatus(status)
@@ -46,25 +74,26 @@ end
 local function moveTask(taskId, newStatus)
     debug("moveTask called: ID=" .. taskId .. ", newStatus=" .. newStatus)
     debug("Current tasks count: " .. #tasks)
-    
+
     for _, task in ipairs(tasks) do
         if task.id == taskId then
             local oldStatus = task.status
             task.status = newStatus
+            saveTasksToDB() -- Save to database
             debug("Moved task '" .. task.title .. "' from " .. oldStatus .. " to " .. newStatus)
             debug("Task data after move: ID=" .. task.id .. ", Title=" .. task.title .. ", Status=" .. task.status)
-            
+
             -- Debug: Show all tasks after the move
             debug("All tasks after move:")
             for i, t in ipairs(tasks) do
                 debug("  " .. i .. ". ID=" .. t.id .. ", Title=" .. t.title .. ", Status=" .. t.status)
             end
-            
+
             return true
         end
     end
     debug("Failed to move task with ID " .. taskId .. " to " .. newStatus)
-    debug("Available task IDs: " .. table.concat({unpack(tasks, 1, #tasks, function(t) return t.id end)}, ", "))
+    debug("Available task IDs: " .. table.concat({ unpack(tasks, 1, #tasks, function(t) return t.id end) }, ", "))
     return false
 end
 
@@ -78,6 +107,7 @@ local function addTask(title, description, priority)
         priority = priority or "Medium"
     }
     table.insert(tasks, newTask)
+    saveTasksToDB() -- Save to database
     debug("Added new task: " .. title)
     return newTask.id
 end
@@ -88,6 +118,7 @@ local function updateTask(taskId, updates)
             for key, value in pairs(updates) do
                 task[key] = value
             end
+            saveTasksToDB() -- Save to database
             debug("Updated task: " .. task.title)
             return true
         end
@@ -100,6 +131,7 @@ local function deleteTask(taskId)
         if task.id == taskId then
             local title = task.title
             table.remove(tasks, i)
+            saveTasksToDB() -- Save to database
             debug("Deleted task: " .. title)
             return true
         end
@@ -110,8 +142,15 @@ end
 local function clearAllTasks()
     local taskCount = #tasks
     tasks = {}
+    saveTasksToDB() -- Save to database
     debug("Cleared all " .. taskCount .. " tasks")
     return true
+end
+
+-- Function to initialize the TaskManager (call this after database is ready)
+local function initialize()
+    loadTasksFromDB()
+    debug("TaskManager initialized")
 end
 
 -- Export task manager
@@ -123,7 +162,8 @@ local TaskManager = {
     addTask = addTask,
     updateTask = updateTask,
     deleteTask = deleteTask,
-    clearAllTasks = clearAllTasks
+    clearAllTasks = clearAllTasks,
+    initialize = initialize
 }
 
 -- Make available globally
@@ -134,4 +174,4 @@ if addon then
     addon.TaskManager = TaskManager
 end
 
-return TaskManager 
+return TaskManager

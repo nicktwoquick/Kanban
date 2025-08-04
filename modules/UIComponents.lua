@@ -84,7 +84,7 @@ local function createColumn(columnData, parentFrame)
     debug("Creating column: " .. columnData.name)
     
     -- Create a simple column group with title
-    local columnGroup = AceGUI:Create("InlineGroup")
+    local columnGroup = AceGUI:Create("InlineGroup") --TODO: can i make this a simple group?
     columnGroup:SetLayout("List")
     columnGroup:SetFullHeight(true)
     

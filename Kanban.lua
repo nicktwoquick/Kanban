@@ -4,8 +4,9 @@
 local addonName, addon = ...
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
+local AceDB = LibStub("AceDB-3.0")
 
--- Create the addon using AceAddon framework
+-- Create the addon using AceAdcedon framework
 local Kanban = AceAddon:NewAddon(addonName, "AceEvent-3.0")
 addon = Kanban -- Make addon globally accessible
 _G.Kanban = Kanban -- Make addon globally accessible for modules
@@ -18,6 +19,14 @@ local function debug(message)
     print("|cFF00FF00Kanban|r: " .. message)
 end
 
+local defaults = {
+    profile = {
+      options = {
+        debug = true,
+      },
+    }
+}
+
 -- Addon initialization
 function Kanban:OnInitialize()
     -- Create slash command
@@ -26,6 +35,8 @@ function Kanban:OnInitialize()
     SlashCmdList["KANBAN"] = function(msg)
         Kanban:ToggleWindow()
     end
+
+    self.db = AceDB:New("KanbanDB", defaults)
     
     -- Attach modules to the addon
     self.Utils = _G.Kanban_Utils
@@ -34,6 +45,11 @@ function Kanban:OnInitialize()
     self.Dialogs = _G.Kanban_Dialogs
     self.Board = _G.Kanban_Board
     
+    -- Initialize modules that need database access
+    if self.TaskManager and self.TaskManager.initialize then
+        self.TaskManager:initialize()
+    end
+    
     debug("Addon loaded. Type /kanban or /kb to open the window.")
     debug("Global Kanban reference set: " .. tostring(_G.Kanban ~= nil))
 end
@@ -41,6 +57,9 @@ end
 -- Toggle the main window
 function Kanban:ToggleWindow()
     debug("ToggleWindow called")
+    if self.db.profile.options.debug then
+        debug("Debug mode is enabled")
+    end
     
     -- Defensive check: ensure we only have one window
     if self.mainFrame and not self.mainFrame:IsValid() then
@@ -145,12 +164,10 @@ function Kanban:RefreshComponents()
     
     -- Recreate the kanban board
     debug("Recreating kanban board")
-    local boardContainer = AceGUI:Create("InlineGroup")
-    boardContainer:SetLayout("Flow")
+    local boardContainer = AceGUI:Create("SimpleGroup")
+    boardContainer:SetLayout("Fill") -- Use Fill layout to match CreateMainWindow
     boardContainer:SetWidth(880)
-    -- Set a specific height for the board container to ensure proper sizing
-    -- Window (700) - Window padding (57) - CRUD row (60) = 583px available
-    boardContainer:SetHeight(583)
+    boardContainer:SetHeight(540) -- Use same height as CreateMainWindow
     
     -- Add the kanban board with error handling
     local success, kanbanBoard = pcall(function()
@@ -295,7 +312,7 @@ function Kanban:CreateMainWindow()
     debug("About to create kanban board")
     
     -- Create the kanban board container with Flow layout for horizontal columns
-    local boardContainer = AceGUI:Create("InlineGroup")
+    local boardContainer = AceGUI:Create("SimpleGroup")
     boardContainer:SetLayout("Fill") -- Use Flow layout to arrange columns horizontally
     boardContainer:SetWidth(880)
     boardContainer:SetHeight(540)
@@ -326,9 +343,6 @@ function Kanban:CreateMainWindow()
     
         debug("CreateMainWindow completed successfully")
         debug("Main frame created: " .. tostring(self.mainFrame ~= nil))
-        if self.mainFrame then
-            debug("Main frame title: " .. tostring(self.mainFrame:GetTitle()))
-        end
     end)
     
     if not success then
