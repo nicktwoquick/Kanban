@@ -17,7 +17,8 @@ local dragState = {
     draggedWidget = nil,
     originalParent = nil,
     originalPosition = nil,
-    dropZones = {}
+    dropZones = {},
+    dragGhost = nil
 }
 
 -- Function to create drop zones for each column
@@ -37,9 +38,6 @@ local function createDropZone(columnName, parentFrame)
     })
     dropZone:SetBackdropColor(0, 0, 0, 0)
     dropZone:SetBackdropBorderColor(0, 0, 0, 0)
-    
-    -- Temporary: Add visible border for debugging (remove this later)
-    dropZone:SetBackdropBorderColor(1, 0, 0, 0.5) -- Red border for debugging
     
     -- Store reference to drop zone
     dragState.dropZones[columnName] = dropZone
@@ -112,10 +110,76 @@ local function handleTaskDrop(draggedWidget, taskData, targetDropZone)
     end
 end
 
+-- Function to create a drag ghost
+local function createDragGhost(taskData)
+    local ghost = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    ghost:SetSize(200, 120) -- Same size as task cards
+    ghost:SetFrameStrata("TOOLTIP")
+    ghost:SetFrameLevel(1000)
+    
+    -- Create ghost appearance
+    ghost:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 16,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    ghost:SetBackdropColor(0.2, 0.2, 0.2, 0.8)
+    ghost:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.8)
+    
+    -- Add task title to ghost
+    local titleText = ghost:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    titleText:SetPoint("TOPLEFT", 10, -10)
+    titleText:SetPoint("TOPRIGHT", -10, -10)
+    titleText:SetText(taskData.title)
+    titleText:SetTextColor(1, 1, 1, 0.8)
+    ghost.titleText = titleText
+    
+    -- Add priority indicator
+    local priorityText = ghost:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    priorityText:SetPoint("BOTTOMLEFT", 10, 10)
+    priorityText:SetText("Priority: " .. taskData.priority)
+    if taskData.priority == "High" then
+        priorityText:SetTextColor(1, 0.3, 0.3, 0.8)
+    elseif taskData.priority == "Medium" then
+        priorityText:SetTextColor(1, 1, 0.3, 0.8)
+    else
+        priorityText:SetTextColor(0.3, 1, 0.3, 0.8)
+    end
+    ghost.priorityText = priorityText
+    
+    return ghost
+end
+
+-- Function to update drag ghost position
+local function updateDragGhostPosition()
+    if dragState.dragGhost then
+        local mouseX, mouseY = GetCursorPosition()
+        local uiScale = UIParent:GetEffectiveScale()
+        mouseX = mouseX / uiScale
+        mouseY = mouseY / uiScale
+        
+        -- Position ghost at mouse cursor, offset slightly so it doesn't cover the cursor
+        dragState.dragGhost:SetPoint("CENTER", UIParent, "BOTTOMLEFT", mouseX, mouseY)
+    end
+end
+
+-- Function to destroy drag ghost
+local function destroyDragGhost()
+    if dragState.dragGhost then
+        dragState.dragGhost:Hide()
+        dragState.dragGhost:SetParent(nil)
+        dragState.dragGhost = nil
+    end
+end
+
 -- Function to restore dragged widget to original position
 local function restoreDraggedWidget()
     if dragState.draggedWidget and dragState.originalParent then
         debug("Restoring dragged widget to original position")
+        
+        -- Destroy the drag ghost
+        destroyDragGhost()
         
         -- For AceGUI widgets, we need to refresh the entire UI instead of trying to restore
         -- Clear drag state first
@@ -243,6 +307,10 @@ local function createTaskCard(task, parentFrame)
             dragState.originalParent = self:GetParent()
             dragState.originalPosition = {self:GetPoint()}
             
+            -- Create and show drag ghost
+            dragState.dragGhost = createDragGhost(task)
+            updateDragGhostPosition()
+            
             -- Change cursor to indicate dragging
             SetCursor("Interface\\CURSOR\\UI-Cursor-Move")
             
@@ -253,6 +321,13 @@ local function createTaskCard(task, parentFrame)
                     dropZone:SetBackdropBorderColor(0.2, 0.6, 1, 0.8)
                 end
             end
+            
+            -- Set up mouse movement tracking for ghost
+            frame:SetScript("OnUpdate", function(self)
+                if dragState.isDragging then
+                    updateDragGhostPosition()
+                end
+            end)
         end
     end)
     
@@ -260,6 +335,9 @@ local function createTaskCard(task, parentFrame)
     frame:SetScript("OnMouseUp", function(self, button)
         if button == "LeftButton" and dragState.isDragging then
             debug("Ending drag for task: " .. task.title)
+            
+            -- Stop mouse movement tracking
+            frame:SetScript("OnUpdate", nil)
             
             -- Reset cursor
             ResetCursor()
@@ -274,6 +352,8 @@ local function createTaskCard(task, parentFrame)
             local targetDropZone = getDropTarget()
             if targetDropZone and targetDropZone.columnName ~= task.status then
                 debug("Valid drop target found: " .. targetDropZone.columnName)
+                -- Destroy ghost before handling drop
+                destroyDragGhost()
                 handleTaskDrop(cardGroup, task, targetDropZone)
             else
                 debug("No valid drop target, restoring original position")
@@ -340,6 +420,9 @@ end
 
 -- Function to clear drop zones (call this when refreshing the board)
 local function clearDropZones()
+    -- Clean up any existing drag ghost
+    destroyDragGhost()
+    
     dragState.dropZones = {}
     dragState.isDragging = false
     dragState.draggedWidget = nil
