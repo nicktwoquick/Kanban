@@ -96,6 +96,12 @@ function Kanban:RefreshMainWindow()
     debug("RefreshMainWindow called")
 
     local success, error = pcall(function()
+        -- Clear drop zones before refreshing
+        if self.UIComponents and self.UIComponents.clearDropZones then
+            debug("Clearing drop zones before refresh")
+            self.UIComponents.clearDropZones()
+        end
+
         -- Check if main frame exists
         if self.mainFrame then
             debug("Main frame exists, forcing complete refresh")
@@ -143,6 +149,12 @@ end
 -- Refresh just the components without recreating the entire window
 function Kanban:RefreshComponents()
     debug("RefreshComponents called")
+
+    -- Clear drop zones before refreshing
+    if self.UIComponents and self.UIComponents.clearDropZones then
+        debug("Clearing drop zones before component refresh")
+        self.UIComponents.clearDropZones()
+    end
 
     if not self.mainFrame then
         debug("No main frame to refresh components")
