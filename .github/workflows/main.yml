@@ -1,0 +1,9 @@
+name: 'Create release'
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  call-deploy:
+    uses: nicktwoquick/gh-workflows/.github/workflows/wow-addon-release.yml@main
